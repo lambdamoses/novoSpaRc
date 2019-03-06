@@ -1,0 +1,29 @@
+Package: novoSpaRc
+Type: Package
+Title: Spatial Reconstruction of Tissues from scRNA-seq Data
+Version: 0.99.0
+Author: Lambda Moses
+Maintainer: Lambda Moses <dlu2@caltech.edu>
+Description: While single cell RNA-seq (scRNA-seq) provides biological insights
+    at the single cell resolution, dissociation of cells from tissues is
+    required for this procedure, thereby destroying spatial context of cells and
+    gene expression. Various methods have been devised to reconstruct the lost
+    spatial context by integrating scRNA-seq data and an in situ atlas that has
+    spatial information but for fewer landmark genes. This package is based on
+    the method developed in the biorxiv paper Charting a tissue from single-cell 
+    transcriptomes by Nitzan et al., 2018 (https://doi.org/10.1101/456350), 
+    which uses optimal transport to reconstruct the spatial context with or 
+    without an in situ atlas. This method is called de novo Spatial 
+    Reconstruction (novoSpaRc), and is originally implemented in Python by the
+    authors of the paper. This package is an R implementation of novoSpaRc.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports:
+    Barycenter,
+    Rfast,
+    scran,
+    igraph
+biocViews:
+    SingleCell,
+    Transcriptomics
+RoxygenNote: 6.1.1
