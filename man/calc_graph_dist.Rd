@@ -4,23 +4,26 @@
 \name{calc_graph_dist}
 \alias{calc_graph_dist}
 \alias{calc_graph_dist,ANY-method}
+\alias{calc_graph_dist,missing-method}
 \alias{calc_graph_dist,SingleCellExperiment-method}
 \alias{calc_graph_dist,seurat-method}
 \title{Compute graph-based distance among cells or locations}
 \usage{
-calc_graph_dist(x, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(), ...)
+calc_graph_dist(x, k, ...)
 
-\S4method{calc_graph_dist}{ANY}(x, k, BNINDEX, BNPARAM,
-  BPPARAM = SerialParam(), transposed = FALSE, n.pcs = NA,
-  irlba.args = list(), ...)
+\S4method{calc_graph_dist}{ANY}(x, k, BNPARAM, BPPARAM = SerialParam(),
+  transposed = FALSE, n.pcs = NA, irlba.args = list(), ...)
 
-\S4method{calc_graph_dist}{SingleCellExperiment}(x, k, BNINDEX, BNPARAM,
+\S4method{calc_graph_dist}{missing}(x, k, BNINDEX, BNPARAM,
+  BPPARAM = SerialParam(), ...)
+
+\S4method{calc_graph_dist}{SingleCellExperiment}(x, k, BNPARAM,
   BPPARAM = SerialParam(), assay.use = "logcounts", use.dimred = NA,
   ...)
 
-\S4method{calc_graph_dist}{seurat}(x, k, BNINDEX, BNPARAM,
+\S4method{calc_graph_dist}{seurat}(x, k, BNPARAM,
   BPPARAM = SerialParam(), assay.type = "RNA", slot = "data",
-  reduction.type = NA, slot.dr = "gene.loadings", ...)
+  reduction.type = NA, slot.dr = "cell.embeddings", ...)
 }
 \arguments{
 \item{x}{A SingleCellExperiment object, a \code{seurat} object, or a matrix
@@ -32,15 +35,12 @@ should be normalized. If the cells are in rows, then set
 
 \item{k}{An integer scalar for the number of nearest neighbors.}
 
-\item{BNINDEX}{A \linkS4class{BiocNeighborIndex} object containing precomputed index information.
-        This can be missing if \code{BNPARAM} is supplied, see Details.}
+\item{...}{Further arguments to pass to \code{\link[BiocNeighbors]{findKNN}}.}
 
 \item{BNPARAM}{A \linkS4class{BiocNeighborParam} object specifying the algorithm to use.
         This can be missing if \code{BNINDEX} is supplied, see Details.}
 
 \item{BPPARAM}{a \linkS4class{BiocParallelParam} class for parallelization.}
-
-\item{...}{Further arguments to pass to \code{\link[BiocNeighbors]{findKNN}}.}
 
 \item{transposed}{Logical, whether the matrix has cells in rows rather than
 in columns.}
@@ -53,6 +53,9 @@ the number specified will be the number of top principal components used.}
 \item{irlba.args}{Named list of arguments to be passed to
 \code{\link[irlba]{prcomp_irlba}}, such as whether to scale and center the
 data prior to PCA.}
+
+\item{BNINDEX}{A \linkS4class{BiocNeighborIndex} object containing precomputed index information.
+        This can be missing if \code{BNPARAM} is supplied, see Details.}
 
 \item{assay.use}{A string specifying which assay to use, defaults to
 \code{logcounts}, namely log1p normalized data.}
@@ -76,7 +79,7 @@ and the dimension reduction specified by \code{reduction.type} and \code{slot.dr
 will be used instead.}
 
 \item{slot.dr}{A string specifying the slot within the dimension reduction to
-use for KNN search, defaults to \code{"gene.loadings"}.}
+use for KNN search, defaults to \code{"cell.embeddings"}.}
 }
 \value{
 A dense square numeric matrix with n cells columns and rows. The
@@ -108,10 +111,9 @@ neighbor search. For instance, use \code{BPPARAM = MulticoreParam(3)} for
 using 3 threads in shared memory computing.
 
 The \code{BNINDEX} argument is for precomputed index information for
-different algorithms to find k-nearests neighbors. Use this argument to
-change the algorithm. Using a pre-computed index will save when multiple KNN
-search are performed on the same X. If \code{BNINDEX} is specified, then
-X does not need to be specified and any value specified for X will be ignored.
+different algorithms to find k-nearests neighbors. Using a pre-computed index
+will save when multiple KNN search are performed on the same x.
+If \code{BNINDEX} is to be specified, then x should be missing.
 
 The \code{BNPARAM} argument is used for setting parameters for KNN search
 algorithms, such as the kind of distance metric used.

@@ -62,10 +62,9 @@
 #' using 3 threads in shared memory computing.
 #'
 #' The \code{BNINDEX} argument is for precomputed index information for
-#' different algorithms to find k-nearests neighbors. Use this argument to
-#' change the algorithm. Using a pre-computed index will save when multiple KNN
-#' search are performed on the same X. If \code{BNINDEX} is specified, then
-#' X does not need to be specified and any value specified for X will be ignored.
+#' different algorithms to find k-nearests neighbors. Using a pre-computed index
+#' will save when multiple KNN search are performed on the same x.
+#' If \code{BNINDEX} is to be specified, then x should be missing.
 #'
 #' The \code{BNPARAM} argument is used for setting parameters for KNN search
 #' algorithms, such as the kind of distance metric used.
@@ -86,9 +85,7 @@
 #' entry at ith row and jth column represents the normalized shortest path
 #' length between vertex i and vertex j.
 #' @export
-setGeneric("calc_graph_dist", function(x, k, BNINDEX, BNPARAM,
-                                       BPPARAM = SerialParam(),
-                                       ...) {
+setGeneric("calc_graph_dist", function(x, k, ...) {
   standardGeneric("calc_graph_dist")
 })
 
@@ -104,7 +101,7 @@ setGeneric("calc_graph_dist", function(x, k, BNINDEX, BNPARAM,
 #' data prior to PCA.
 #' @export
 setMethod("calc_graph_dist", "ANY",
-          function(x, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(),
+          function(x, k, BNPARAM, BPPARAM = SerialParam(),
                    transposed = FALSE,
                    n.pcs = NA,
                    irlba.args = list(), ...) {
@@ -117,13 +114,21 @@ setMethod("calc_graph_dist", "ANY",
               irlba.args$retx <- TRUE
               irlba.args$n <- n.pcs
               x_use <- do.call(prcomp_irlba, irlba.args)$x
-              out <- .calc_graph_dist(x_use, k, BNINDEX = BNINDEX, BNPARAM = BNPARAM,
+              out <- .calc_graph_dist(x_use, k, BNPARAM = BNPARAM,
                                       BPPARAM = BPPARAM, ...)
             } else {
-              out <- .calc_graph_dist(x, k, BNINDEX = BNINDEX, BNPARAM = BNPARAM,
+              out <- .calc_graph_dist(x, k, BNPARAM = BNPARAM,
                                       BPPARAM = BPPARAM, ...)
             }
             return(out)
+          })
+
+#' @rdname calc_graph_dist
+#' @export
+setMethod("calc_graph_dist", "missing",
+          function(x, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(), ...) {
+            .calc_graph_dist(k = k, BNINDEX = BNINDEX, BNPARAM = BNPARAM,
+                             BPPARAM = BPPARAM, ...)
           })
 
 #' @rdname calc_graph_dist
@@ -140,15 +145,15 @@ setMethod("calc_graph_dist", "ANY",
 #' @importFrom SummarizedExperiment assay
 #' @export
 setMethod("calc_graph_dist", "SingleCellExperiment",
-          function(x, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(),
+          function(x, k, BNPARAM, BPPARAM = SerialParam(),
                    assay.use = "logcounts",
                    use.dimred = NA, ...) {
             if (!is.na(use.dimred)) {
               out <- .calc_graph_dist(reducedDim(x, use.dimred), k,
-                                      BNINDEX, BNPARAM, BPPARAM, ...)
+                                      BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
             } else {
               out <- .calc_graph_dist(assay(x, i = assay.use), k,
-                                      BNINDEX, BNPARAM, BPPARAM, ...)
+                                      BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
             }
             return(out)
           })
@@ -166,16 +171,16 @@ setMethod("calc_graph_dist", "SingleCellExperiment",
 #' use for KNN search, defaults to \code{"cell.embeddings"}.
 #' @export
 setMethod("calc_graph_dist", "seurat",
-          function(x, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(),
+          function(x, k, BNPARAM, BPPARAM = SerialParam(),
                    assay.type = "RNA", slot = "data",
                    reduction.type = NA, slot.dr = "cell.embeddings",
                    ...) {
             if (!is.na(reduction.type)) {
               out <- .calc_graph_dist(GetDimReduction(x, reduction.type, slot.dr),
-                                      k, BNINDEX, BNPARAM, BPPARAM, ...)
+                                      k, BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
             } else {
               out <- .calc_graph_dist(GetAssayData(x, assay.type, slot),
-                                      k, BNINDEX, BNPARAM, BPPARAM, ...)
+                                      k, BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
             }
             return(out)
           })

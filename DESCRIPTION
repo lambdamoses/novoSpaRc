@@ -20,9 +20,15 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     Barycenter,
-    Rfast,
-    scran,
-    igraph
+    BiocNeighbors,
+    BiocParallel,
+    RBGL,
+    Seurat,
+    SingleCellExperiment,
+    SummarizedExperiment,
+    graph,
+    methods,
+    Rfast
 biocViews:
     SingleCell,
     Transcriptomics
