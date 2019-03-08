@@ -28,7 +28,8 @@ Imports:
     SummarizedExperiment,
     graph,
     methods,
-    Rfast
+    ggplot2,
+    plotly
 biocViews:
     SingleCell,
     Transcriptomics

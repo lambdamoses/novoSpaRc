@@ -5,13 +5,15 @@
 #'
 #' @inheritParams BiocNeighbors::findKNN
 #' @param \dots Further arguments to pass to \code{\link[BiocNeighbors]{findKNN}}.
+#' @return A dense square numeric matrix with n cells columns and rows. The
+#' entry at ith row and jth column represents the normalized shortest path
+#' length between vertex i and vertex j.
 #' @importFrom graph graphBAM
 #' @importFrom BiocNeighbors findKNN
 #' @importFrom RBGL johnson.all.pairs.sp
 #' @importFrom methods setMethod
 #' @importFrom BiocParallel SerialParam
 #'
-
 .calc_graph_dist <- function(X, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(), ...) {
   fknn_args <- c(k = k, BPPARAM = BPPARAM, list(...))
   if (missing(BNINDEX)) {

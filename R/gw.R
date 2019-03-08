@@ -8,16 +8,16 @@
 #'
 #' @param D_cell Graph-based distance matrix between pairs of cells, generated
 #' from function \code{\link{calc_graph_dist}} in this package.
-#' @param D_loc Graph-based distance matrix between pairs of locations,
-#' generated from function \code{\link{calc_graph_dist}} in this package.
+#' @param tD_loc Transpose of the graph-based distance matrix between pairs of
+#' locations generated from function \code{\link{calc_graph_dist}} in this
+#' package. Since the k-nearest neighbor graph is directed, the matrix is not
+#' necessarily symmetric.
 #' @param T_tmp A matrix for probabilistic assignment of cells (in rows) to
 #' locations (in columns). This matrix will be updated in gradient descent.
 #'
 #' @return A numeric matrix with cells in rows and locations in columns.
-#' @importFrom Rfast mat.mult transpose
-tens_gr_square_loss <- function(D_cell, D_loc, T_tmp) {
-  # Rfast::mat.mult for parallel, faster matrix multiplication
-  out <- -mat.mult(mat.mult(D_cell, T_tmp), transpose(D_loc))
+tens_gr_square_loss <- function(D_cell, tD_loc, T_tmp) {
+  out <- -D_cell %*% T_tmp %*% tD_loc
   out - min(out)
 }
 
@@ -41,18 +41,25 @@ tens_gr_square_loss <- function(D_cell, D_loc, T_tmp) {
 #' cells' pairwise distance and locations' pairwise distance. Right now only
 #' "square", meaning square loss, is supported.
 #' @param epsilon Entropy regularization term.
-#' @param tol Tolerance. When \code{alpha != 1}, this function uses gradient
+#' @param tol Tolerance. When \code{alpha != 1}, this function uses projected gradient
 #' descent to find the probabilistic assignment of cells to locations. When the
 #' change in objective value is less than a tolerance, then the grdient descent
 #' iteration will stop.
-#' @param maxiter Maximum number of iterations in gradient descent.
-#' @param verbose Whether to display progress during gradient descent.
-#'
+#' @param maxiter Maximum number of iterations in projected gradient descent.
+#' @param verbose Whether to display progress during projected gradient descent.
+#' @param check_every Check change in objective value once in how many iterations
+#' in gradient descent. For instance, if 10 is passed to this argument, then
+#' check once every 10 iterations. You may not want to check every single
+#' iteration since checking involves computing the Frobenius norm of a potentially
+#' large matrix, which can be time consuming. However, if you do not check
+#' frequently enough, then this function will keep on running after the actual
+#' change in objective is less than the tolerance until the next check.
 #' @return A matrix with cells in rows and locations in columns.
 #' @importFrom Barycenter Sinkhorn
 gw_assign <- function(D_cell, D_loc, D_cell_loc, alpha, p, q,
                       loss_fun = "square", epsilon = 5e-4, maxiter = 1000,
-                      tol = sqrt(.Machine$double.eps), verbose = TRUE) {
+                      tol = sqrt(.Machine$double.eps), verbose = TRUE,
+                      check_every = 10) {
   if (epsilon < 0) stop("epsilon must not be negative.")
   # Initialize
   T_tmp <- tcrossprod(p, q)
@@ -80,21 +87,22 @@ gw_assign <- function(D_cell, D_loc, D_cell_loc, alpha, p, q,
     if (loss_fun != "square") {
       message("Only square loss is currently supported. Using square loss.")
     }
+    D_loc <- t(D_loc) # Don't transpose in every single iteration
     while (err > tol && cpt < maxiter) {
       Tprev <- T_tmp
       tens <- tens_gr_square_loss(D_cell, D_loc, T_tmp)
       tens_all <- (1 - alpha) * tens + alpha * Dcl_norm
       T_tmp <- Sinkhorn(p, q, tens_all, epsilon, maxIter = 1000)$Transportplan
-      if (cpt %% 10 == 0) {
+      if (cpt %% check_every == 0) {
         err <- norm(T_tmp - Tprev, "F")
         if (verbose) {
-          cat("Iteration", cpt, ", Err:", err, "\n", sep = " ")
+          cat("Iteration ", cpt, ", delta: ", err, "\n", sep = "")
         }
       }
       cpt <- cpt + 1
     }
     if (err > tol) {
-      warning("Error is greater than tolerance when maxiter is exhausted.")
+      warning("Change in objective is greater than tolerance when maxiter is exhausted.")
     }
   }
   return(T_tmp)
