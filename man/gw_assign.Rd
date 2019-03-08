@@ -6,14 +6,11 @@
 \usage{
 gw_assign(D_cell, D_loc, D_cell_loc, alpha, p, q, loss_fun = "square",
   epsilon = 5e-04, maxiter = 1000, tol = sqrt(.Machine$double.eps),
-  verbose = TRUE)
+  verbose = TRUE, check_every = 10)
 }
 \arguments{
 \item{D_cell}{Graph-based distance matrix between pairs of cells, generated
 from function \code{\link{calc_graph_dist}} in this package.}
-
-\item{D_loc}{Graph-based distance matrix between pairs of locations,
-generated from function \code{\link{calc_graph_dist}} in this package.}
 
 \item{D_cell_loc}{Distance (e.g. Euclidean) matrix between each cell and each
 location in gene expression space if in situ atlas is present. This argument
@@ -32,14 +29,22 @@ cells' pairwise distance and locations' pairwise distance. Right now only
 
 \item{epsilon}{Entropy regularization term.}
 
-\item{maxiter}{Maximum number of iterations in gradient descent.}
+\item{maxiter}{Maximum number of iterations in projected gradient descent.}
 
-\item{tol}{Tolerance. When \code{alpha != 1}, this function uses gradient
+\item{tol}{Tolerance. When \code{alpha != 1}, this function uses projected gradient
 descent to find the probabilistic assignment of cells to locations. When the
 change in objective value is less than a tolerance, then the grdient descent
 iteration will stop.}
 
-\item{verbose}{Whether to display progress during gradient descent.}
+\item{verbose}{Whether to display progress during projected gradient descent.}
+
+\item{check_every}{Check change in objective value once in how many iterations
+in gradient descent. For instance, if 10 is passed to this argument, then
+check once every 10 iterations. You may not want to check every single
+iteration since checking involves computing the Frobenius norm of a potentially
+large matrix, which can be time consuming. However, if you do not check
+frequently enough, then this function will keep on running after the actual
+change in objective is less than the tolerance until the next check.}
 }
 \value{
 A matrix with cells in rows and locations in columns.

@@ -29,7 +29,9 @@ Imports:
     graph,
     methods,
     ggplot2,
-    plotly
+    plotly,
+    dplyr,
+    tidyr
 biocViews:
     SingleCell,
     Transcriptomics

@@ -22,6 +22,11 @@
 
 \item{\dots}{Further arguments to pass to \code{\link[BiocNeighbors]{findKNN}}.}
 }
+\value{
+A dense square numeric matrix with n cells columns and rows. The
+entry at ith row and jth column represents the normalized shortest path
+length between vertex i and vertex j.
+}
 \description{
 This function is internal and is called by various S4 methods after method
 specific pre-processing of data.
