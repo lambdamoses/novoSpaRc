@@ -103,10 +103,12 @@ plot_spatial_expression <- function(gene_expressions, locations, symmetry,
         gather(key = "gene", "value", -x, -y)
     }
     p <- ggplot(df, aes(x, y, color = value)) +
-      geom_point(size = pt_size, alpha = alpha)
+      geom_point(size = pt_size, alpha = alpha) +
+      scale_color_viridis_c() +
+      coord_equal()
     if (ngenes > 1) {
       p <- p +
-        facet_wrap(~gene, ncol = ncol)
+        facet_wrap(~gene, ncol = n_col)
     }
     if (interactive) p <- toWebGL(p)
   } else {

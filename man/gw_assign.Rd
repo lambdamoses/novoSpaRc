@@ -6,7 +6,7 @@
 \usage{
 gw_assign(D_cell, D_loc, D_cell_loc, alpha, p, q, loss_fun = "square",
   epsilon = 5e-04, maxiter = 1000, tol = sqrt(.Machine$double.eps),
-  verbose = TRUE, check_every = 10)
+  verbose = TRUE, check_every = 10, use_blas = TRUE, nthreads = 0)
 }
 \arguments{
 \item{D_cell}{Graph-based distance matrix between pairs of cells, generated
@@ -45,6 +45,18 @@ iteration since checking involves computing the Frobenius norm of a potentially
 large matrix, which can be time consuming. However, if you do not check
 frequently enough, then this function will keep on running after the actual
 change in objective is less than the tolerance until the next check.}
+
+\item{use_blas}{Logical, whether to use BLAS for matrix multiplication. If
+\code{TRUE}, then BLAS will be used. Otherwise, custom C++ code parallelized
+with OpenMP will be used. See details. \strong{Please do make sure to set this
+argument to \code{TRUE} if you use an optimized BLAS}, since BLAS
+parallelization does not play nicely with explicit parallelization, which is
+used when this argument is set to \code{FALSE}. Defaults to \code{TRUE}.}
+
+\item{nthreads}{Number of threads to use if \code{use_blas = FALSE}. If 0,
+then the system will determine the number of threads as it sees fit. If a
+positive integer, then this will limit the number of threads used. Ignored if
+\code{use_blas = TRUE}.}
 }
 \value{
 A matrix with cells in rows and locations in columns.
@@ -55,4 +67,39 @@ locations, and optionally a distance matrix (e.g. Euclidean) bewteen cells
 and locations in gene expression space if an in situ atlas is present, to
 compute a probabilistic assignment of cells to locations. See the Methods
 section of the \href{https://www.biorxiv.org/content/biorxiv/early/2018/10/30/456350.full.pdf}{novoSpaRc paper}.
+}
+\details{
+R uses BLAS for linear algebra, and the default BLAS that
+comes with R is not optimized. Using an optimized version of BLAS, such as
+OpenBLAS and Intel MKL (as in Microsoft R Open), can speed up matrix
+multiplication several times compared to default BLAS. For the projected
+gradient descent, a matrix multiplication is done in each iteration, and the
+matrix can be large if your dataset has many cells. Therefore, an optimized
+BLAS is strongly recommended.
+
+To use an optimized BLAS with R, you need to compile R from source. In
+configuration, use the options \code{--with-blas} and \code{--with-lapack}. See the R
+Installation and Administration Appendix A for more details. For MacOS, we
+recommend compiling with Clang (not the Apple default one, which
+does not have OpenMP support), a binary of which can be downloaded
+\href{https://cran.r-project.org/bin/macosx/tools/}{here}. An example compilation
+command on MacOS with Homebrew OpenBLAS is\preformatted{./configure CC=/usr/local/clang6/bin/clang \
+CXX="/usr/local/clang6/bin/clang++ -Wall" \
+--with-blas="/usr/local/Cellar/openblas/lib -lopenblas" \
+--with-lapack
+make
+make install
+}
+
+Compilation of R with Intel MKL seems to only work on Linux systems, but you
+can download pre-compiled R that uses Intel MKL from
+\href{https://mran.microsoft.com/open}{Microsoft R Open}.
+
+If your version of R uses an optimized BLAS, then set \code{use_blas = TRUE}.
+If you are using R's default BLAS, which is single threaded, you can speed up
+the matrix multiplication here with parallelized C++ code in this package by
+setting \code{use_blas = FALSE}. The C++ code in this package is based on
+\code{RcppArmadillo} and explicitly parallelizedd with \code{OpenMP}. Since
+Armadillo is also BLAS-based, please do NOT use set \code{use_blas = FALSE}
+if you use an optimized and multithreaded BLAS.
 }
