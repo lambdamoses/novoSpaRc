@@ -1,3 +1,7 @@
+#' @useDynLib novoSpaRc, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+NULL
+
 #' Calculate square loss term in gradient of objective function
 #'
 #' Projected gradient descent is used to numerically solve the optimization
@@ -28,6 +32,43 @@ tens_gr_square_loss <- function(D_cell, tD_loc, T_tmp) {
 #' and locations in gene expression space if an in situ atlas is present, to
 #' compute a probabilistic assignment of cells to locations. See the Methods
 #' section of the \href{https://www.biorxiv.org/content/biorxiv/early/2018/10/30/456350.full.pdf}{novoSpaRc paper}.
+#'
+#' R uses BLAS for linear algebra, and the default BLAS that
+#' comes with R is not optimized. Using an optimized version of BLAS, such as
+#' OpenBLAS and Intel MKL (as in Microsoft R Open), can speed up matrix
+#' multiplication several times compared to default BLAS. For the projected
+#' gradient descent, a matrix multiplication is done in each iteration, and the
+#' matrix can be large if your dataset has many cells. Therefore, an optimized
+#' BLAS is strongly recommended.
+#'
+#' To use an optimized BLAS with R, you need to compile R from source. In
+#' configuration, use the options `--with-blas` and `--with-lapack`. See the R
+#' Installation and Administration Appendix A for more details. For MacOS, we
+#' recommend compiling with Clang (not the Apple default one, which
+#' does not have OpenMP support), a binary of which can be downloaded
+#' [here](https://cran.r-project.org/bin/macosx/tools/). An example compilation
+#' command on MacOS with Homebrew OpenBLAS is
+#'
+#' ```
+#' ./configure CC=/usr/local/clang6/bin/clang \
+#' CXX="/usr/local/clang6/bin/clang++ -Wall" \
+#' --with-blas="/usr/local/Cellar/openblas/lib -lopenblas" \
+#' --with-lapack
+#' make
+#' make install
+#' ```
+#'
+#' Compilation of R with Intel MKL seems to only work on Linux systems, but you
+#' can download pre-compiled R that uses Intel MKL from
+#' [Microsoft R Open](https://mran.microsoft.com/open).
+#'
+#' If your version of R uses an optimized BLAS, then set \code{use_blas = TRUE}.
+#' If you are using R's default BLAS, which is single threaded, you can speed up
+#' the matrix multiplication here with parallelized C++ code in this package by
+#' setting \code{use_blas = FALSE}. The C++ code in this package is based on
+#' \code{RcppArmadillo} and explicitly parallelizedd with \code{OpenMP}. Since
+#' Armadillo is also BLAS-based, please do NOT use set \code{use_blas = FALSE}
+#' if you use an optimized and multithreaded BLAS.
 #'
 #' @inheritParams tens_gr_square_loss
 #' @param D_cell_loc Distance (e.g. Euclidean) matrix between each cell and each
