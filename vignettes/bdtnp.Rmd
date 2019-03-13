@@ -2,7 +2,7 @@
 title: "Spatial Reconstruction of Drosophila Embryo"
 author: "Lambda Moses"
 date: "`r Sys.Date()`"
-output: BiocStyle::html_vignette
+output: BiocStyle::html_document
 vignette: >
   %\VignetteIndexEntry{Spatial Reconstruction of Drosophila Embryo}
   %\VignetteEngine{knitr::rmarkdown}

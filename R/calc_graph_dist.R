@@ -37,6 +37,7 @@
 #' @inheritParams BiocNeighbors::findKNN
 #' @param X Numeric matrix (can be sparse) with genes in rows and cells in
 #' columns. If genes are in columns, then set \code{transposed = TRUE}.
+#' @param k Number of nearest neighbor when constructing k-nearest neighbor graph.
 #' @param \dots Further arguments to pass to \code{\link[BiocNeighbors]{findKNN}}.
 #' @param transposed Logical, whether the matrix has cells in rows rather than
 #' in columns. Defaults to \code{FALSE}.

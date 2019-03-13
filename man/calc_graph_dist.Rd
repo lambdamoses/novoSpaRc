@@ -11,6 +11,8 @@ calc_graph_dist(X, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(),
 \item{X}{Numeric matrix (can be sparse) with genes in rows and cells in
 columns. If genes are in columns, then set \code{transposed = TRUE}.}
 
+\item{k}{Number of nearest neighbor when constructing k-nearest neighbor graph.}
+
 \item{BNINDEX}{A \linkS4class{BiocNeighborIndex} object, or \code{NULL}.}
 
 \item{BNPARAM}{A \linkS4class{BiocNeighborParam} object, or \code{NULL} if \code{BININDEX} is supplied.}

@@ -96,7 +96,8 @@ plot_spatial_expression <- function(gene_expressions, locations, symmetry,
     df2[[symmetry]] <- -df[[symmetry]]
     df <- rbind(df, df2)
   }
-
+  # Avoid no visible binding for global variagle x, y, z, gene, value
+  x <- y <- z <- value <- gene <- NULL
   # 2D case
   if (ndims < 3) {
     if (ngenes > 1) {

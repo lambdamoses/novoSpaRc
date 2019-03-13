@@ -39,6 +39,10 @@ tens_gr_square_loss <- function(D_cell, tD_loc, T_tmp) {
 #' BLAS.
 #'
 #' @inheritParams tens_gr_square_loss
+#' @param D_loc Graph-based distance matrix between pairs of
+#' locations generated from function \code{\link{calc_graph_dist}} in this
+#' package. Since the k-nearest neighbor graph is directed, the matrix is not
+#' necessarily symmetric.
 #' @param D_cell_loc Distance (e.g. Euclidean) matrix between each cell and each
 #' location in gene expression space if in situ atlas is present. This argument
 #' can be left missing if an in situ atlas (e.g. from seqFISH, MERFISH,
