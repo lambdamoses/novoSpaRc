@@ -1,44 +1,3 @@
-#' Internal function for graph-based distance
-#'
-#' This function is internal and is called by various S4 methods after method
-#' specific pre-processing of data.
-#'
-#' @inheritParams BiocNeighbors::findKNN
-#' @param \dots Further arguments to pass to \code{\link[BiocNeighbors]{findKNN}}.
-#' @return A dense square numeric matrix with n cells columns and rows. The
-#' entry at ith row and jth column represents the normalized shortest path
-#' length between vertex i and vertex j.
-#' @importFrom graph graphBAM
-#' @importFrom BiocNeighbors findKNN
-#' @importFrom RBGL johnson.all.pairs.sp
-#' @importFrom methods setMethod
-#' @importFrom BiocParallel SerialParam
-#'
-.calc_graph_dist <- function(X, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(), ...) {
-  fknn_args <- c(k = k, BPPARAM = BPPARAM, list(...))
-  if (missing(BNINDEX)) {
-    fknn_args$X <- X
-    if (!missing(BNPARAM)) fknn_args$BNPARAM <- BNPARAM
-  } else {
-    fknn_args$BNINDEX <- BNINDEX
-    if (!missing(BNPARAM)) fknn_args$BNPARAM <- BNPARAM
-  }
-  fknn_args$get.distance <- FALSE
-  knn <- do.call(findKNN, fknn_args)
-  # Convert to graph
-  g <- graphBAM(data.frame(from = as.vector(row(knn$index)),
-                           to = as.vector(knn$index),
-                           weight = 1),
-                edgemode = "directed")
-  # Shortest path
-  sp <- johnson.all.pairs.sp(g)
-  # Normalize
-  sp_max <- max(sp[!is.infinite(sp)])
-  sp[is.infinite(sp)] <- sp_max
-  sp <- (sp - mean(sp)) / sp_max
-  return(sp)
-}
-
 #' Compute graph-based distance among cells or locations
 #'
 #' Since Euclidean distance and Pearson correlation cannot capture the true
@@ -75,114 +34,45 @@
 #' algorithm used, and if both are supplied, they must specify the same algorithm.
 #' If both are missing, then the KmKNN algorithm will be used.
 #'
-#' @inheritParams .calc_graph_dist
-#' @rdname calc_graph_dist
-#' @param x A SingleCellExperiment object, a \code{seurat} object, or a matrix
-#' containing expression values for each gene (row) in each cell (column). The
-#' matrix can be a sparse matrix (\code{\link[Matrix]{dgCMatrix}} or other
-#' sparse matrix classes from the \code{Matrix} package). The data in this matrix
-#' should be normalized. If the cells are in rows, then set
-#' \code{transposed = TRUE} when calling this function.
+#' @inheritParams BiocNeighbors::findKNN
+#' @param X Numeric matrix (can be sparse) with genes in rows and cells in
+#' columns. If genes are in columns, then set \code{transposed = TRUE}.
+#' @param \dots Further arguments to pass to \code{\link[BiocNeighbors]{findKNN}}.
+#' @param transposed Logical, whether the matrix has cells in rows rather than
+#' in columns. Defaults to \code{FALSE}.
+#' @param BPPARAM An object of \code{\link[BiocParallel]{BiocParallelParam}}
+#' class for parallelization. See details.
 #' @return A dense square numeric matrix with n cells columns and rows. The
 #' entry at ith row and jth column represents the normalized shortest path
 #' length between vertex i and vertex j.
+#' @importFrom graph graphBAM
+#' @importFrom BiocNeighbors findKNN
+#' @importFrom RBGL johnson.all.pairs.sp
+#' @importFrom BiocParallel SerialParam
 #' @export
-setGeneric("calc_graph_dist", function(x, k, ...) {
-  standardGeneric("calc_graph_dist")
-})
-
-#' @rdname calc_graph_dist
-#' @param transposed Logical, whether the matrix has cells in rows rather than
-#' in columns.
-#' @param n.pcs Number of principal components to use if KNN search is to be
-#' done in PCA space. If \code{NA}, which is the default, the full matrix as
-#' specified in x will be used for KNN search. If a positive integer, then
-#' the number specified will be the number of top principal components used.
-#' @param irlba.args Named list of arguments to be passed to
-#' \code{\link[irlba]{prcomp_irlba}}, such as whether to scale and center the
-#' data prior to PCA.
-#' @export
-setMethod("calc_graph_dist", "ANY",
-          function(x, k, BNPARAM, BPPARAM = SerialParam(),
-                   transposed = FALSE,
-                   n.pcs = NA,
-                   irlba.args = list(), ...) {
-            if (!transposed) x <- t(x)
-            if (!is.na(n.pcs)) {
-              if (n.pcs < 0) {
-                stop("n.pcs must be NA or a positive integer.")
-              }
-              irlba.args$x <- x
-              irlba.args$retx <- TRUE
-              irlba.args$n <- n.pcs
-              x_use <- do.call(prcomp_irlba, irlba.args)$x
-              out <- .calc_graph_dist(x_use, k, BNPARAM = BNPARAM,
-                                      BPPARAM = BPPARAM, ...)
-            } else {
-              out <- .calc_graph_dist(x, k, BNPARAM = BNPARAM,
-                                      BPPARAM = BPPARAM, ...)
-            }
-            return(out)
-          })
-
-#' @rdname calc_graph_dist
-#' @export
-setMethod("calc_graph_dist", "missing",
-          function(x, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(), ...) {
-            .calc_graph_dist(k = k, BNINDEX = BNINDEX, BNPARAM = BNPARAM,
-                             BPPARAM = BPPARAM, ...)
-          })
-
-#' @rdname calc_graph_dist
-#' @param assay.use A string specifying which assay to use, defaults to
-#' \code{logcounts}, namely log1p normalized data.
-#' @param use.dimred The low dimensional representation of the data to use for
-#' KNN search. Should be a string to use to access dimension reductions in
-#' \code{\link[SingleCellExperiment]{reducedDim}}, If \code{NA}, as default, the
-#' full data as specified in \code{assay.use} will be used. This argument can
-#' also be a numeric index of the position of the desired dimension reduction
-#' result. If not \code{NA}, then \code{assay.use} will be ignored and the
-#' low dimensional representation will be used for KNN search.
-#' @importFrom SingleCellExperiment reducedDim
-#' @importFrom SummarizedExperiment assay
-#' @export
-setMethod("calc_graph_dist", "SingleCellExperiment",
-          function(x, k, BNPARAM, BPPARAM = SerialParam(),
-                   assay.use = "logcounts",
-                   use.dimred = NA, ...) {
-            if (!is.na(use.dimred)) {
-              out <- .calc_graph_dist(reducedDim(x, use.dimred), k,
-                                      BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
-            } else {
-              out <- .calc_graph_dist(assay(x, i = assay.use), k,
-                                      BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
-            }
-            return(out)
-          })
-
-#' @rdname calc_graph_dist
-#' @importFrom Seurat GetAssayData GetDimReduction
-#' @importClassesFrom Seurat seurat
-#' @inheritParams Seurat::GetAssayData
-#' @param reduction.type Type of dimension reduction to use for KNN search. If
-#' \code{NA}, then the full data as specified by \code{assay.type} and \code{slot}
-#' will be used. Otherwise \code{assay.type} and \code{slot} will be ignored,
-#' and the dimension reduction specified by \code{reduction.type} and \code{slot.dr}
-#' will be used instead.
-#' @param slot.dr A string specifying the slot within the dimension reduction to
-#' use for KNN search, defaults to \code{"cell.embeddings"}.
-#' @export
-setMethod("calc_graph_dist", "seurat",
-          function(x, k, BNPARAM, BPPARAM = SerialParam(),
-                   assay.type = "RNA", slot = "data",
-                   reduction.type = NA, slot.dr = "cell.embeddings",
-                   ...) {
-            if (!is.na(reduction.type)) {
-              out <- .calc_graph_dist(GetDimReduction(x, reduction.type, slot.dr),
-                                      k, BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
-            } else {
-              out <- .calc_graph_dist(GetAssayData(x, assay.type, slot),
-                                      k, BNPARAM = BNPARAM, BPPARAM = BPPARAM, ...)
-            }
-            return(out)
-          })
+calc_graph_dist <- function(X, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(),
+                            transposed = FALSE, ...) {
+  if (!transposed) X <- t(X)
+  fknn_args <- c(k = k, BPPARAM = BPPARAM, list(...))
+  if (missing(BNINDEX)) {
+    fknn_args$X <- X
+    if (!missing(BNPARAM)) fknn_args$BNPARAM <- BNPARAM
+  } else {
+    fknn_args$BNINDEX <- BNINDEX
+    if (!missing(BNPARAM)) fknn_args$BNPARAM <- BNPARAM
+  }
+  fknn_args$get.distance <- FALSE
+  knn <- do.call(findKNN, fknn_args)
+  # Convert to graph
+  g <- graphBAM(data.frame(from = as.vector(row(knn$index)),
+                           to = as.vector(knn$index),
+                           weight = 1),
+                edgemode = "directed")
+  # Shortest path
+  sp <- johnson.all.pairs.sp(g)
+  # Normalize
+  sp_max <- max(sp[!is.infinite(sp)])
+  sp[is.infinite(sp)] <- sp_max
+  sp <- (sp - mean(sp)) / sp_max
+  return(sp)
+}
