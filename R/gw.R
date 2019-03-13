@@ -1,7 +1,3 @@
-#' @useDynLib novoSpaRc, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
-NULL
-
 #' Calculate square loss term in gradient of objective function
 #'
 #' Projected gradient descent is used to numerically solve the optimization
@@ -39,36 +35,8 @@ tens_gr_square_loss <- function(D_cell, tD_loc, T_tmp) {
 #' multiplication several times compared to default BLAS. For the projected
 #' gradient descent, a matrix multiplication is done in each iteration, and the
 #' matrix can be large if your dataset has many cells. Therefore, an optimized
-#' BLAS is strongly recommended.
-#'
-#' To use an optimized BLAS with R, you need to compile R from source. In
-#' configuration, use the options `--with-blas` and `--with-lapack`. See the R
-#' Installation and Administration Appendix A for more details. For MacOS, we
-#' recommend compiling with Clang (not the Apple default one, which
-#' does not have OpenMP support), a binary of which can be downloaded
-#' [here](https://cran.r-project.org/bin/macosx/tools/). An example compilation
-#' command on MacOS with Homebrew OpenBLAS is
-#'
-#' ```
-#' ./configure CC=/usr/local/clang6/bin/clang \
-#' CXX="/usr/local/clang6/bin/clang++ -Wall" \
-#' --with-blas="/usr/local/Cellar/openblas/lib -lopenblas" \
-#' --with-lapack
-#' make
-#' make install
-#' ```
-#'
-#' Compilation of R with Intel MKL seems to only work on Linux systems, but you
-#' can download pre-compiled R that uses Intel MKL from
-#' [Microsoft R Open](https://mran.microsoft.com/open).
-#'
-#' If your version of R uses an optimized BLAS, then set \code{use_blas = TRUE}.
-#' If you are using R's default BLAS, which is single threaded, you can speed up
-#' the matrix multiplication here with parallelized C++ code in this package by
-#' setting \code{use_blas = FALSE}. The C++ code in this package is based on
-#' \code{RcppArmadillo} and explicitly parallelizedd with \code{OpenMP}. Since
-#' Armadillo is also BLAS-based, please do NOT use set \code{use_blas = FALSE}
-#' if you use an optimized and multithreaded BLAS.
+#' BLAS is strongly recommended. See vignette for how to make R use optimized
+#' BLAS.
 #'
 #' @inheritParams tens_gr_square_loss
 #' @param D_cell_loc Distance (e.g. Euclidean) matrix between each cell and each
@@ -97,10 +65,11 @@ tens_gr_square_loss <- function(D_cell, tD_loc, T_tmp) {
 #' change in objective is less than the tolerance until the next check.
 #' @return A matrix with cells in rows and locations in columns.
 #' @importFrom Barycenter Sinkhorn
+#' @export
 gw_assign <- function(D_cell, D_loc, D_cell_loc, alpha, p, q,
                       loss_fun = "square", epsilon = 5e-4, maxiter = 1000,
                       tol = sqrt(.Machine$double.eps), verbose = TRUE,
-                      check_every = 10) {
+                      check_every = 1) {
   if (epsilon < 0) stop("epsilon must not be negative.")
   # Initialize
   T_tmp <- tcrossprod(p, q)
@@ -150,3 +119,6 @@ gw_assign <- function(D_cell, D_loc, D_cell_loc, alpha, p, q,
 }
 
 # To do: Unit test on toy example
+# To do: Write function to see whether the assumption that physically closer cells
+# have more similar gene expression profile holds.
+# To do: Add examples in function documentation

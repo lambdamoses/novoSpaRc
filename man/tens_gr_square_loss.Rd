@@ -4,8 +4,7 @@
 \alias{tens_gr_square_loss}
 \title{Calculate square loss term in gradient of objective function}
 \usage{
-tens_gr_square_loss(D_cell, tD_loc, T_tmp, use_blas = TRUE,
-  nthreads = 0)
+tens_gr_square_loss(D_cell, tD_loc, T_tmp)
 }
 \arguments{
 \item{D_cell}{Graph-based distance matrix between pairs of cells, generated
@@ -18,18 +17,6 @@ necessarily symmetric.}
 
 \item{T_tmp}{A matrix for probabilistic assignment of cells (in rows) to
 locations (in columns). This matrix will be updated in gradient descent.}
-
-\item{use_blas}{Logical, whether to use BLAS for matrix multiplication. If
-\code{TRUE}, then BLAS will be used. Otherwise, custom C++ code parallelized
-with OpenMP will be used. See details. \strong{Please do make sure to set this
-argument to \code{TRUE} if you use an optimized BLAS}, since BLAS
-parallelization does not play nicely with explicit parallelization, which is
-used when this argument is set to \code{FALSE}. Defaults to \code{TRUE}.}
-
-\item{nthreads}{Number of threads to use if \code{use_blas = FALSE}. If 0,
-then the system will determine the number of threads as it sees fit. If a
-positive integer, then this will limit the number of threads used. Ignored if
-\code{use_blas = TRUE}.}
 }
 \value{
 A numeric matrix with cells in rows and locations in columns.

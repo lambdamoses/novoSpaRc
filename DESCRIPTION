@@ -23,16 +23,19 @@ Imports:
     BiocNeighbors,
     BiocParallel,
     RBGL,
-    Seurat,
-    SingleCellExperiment,
-    SummarizedExperiment,
     graph,
     methods,
     ggplot2,
     plotly,
     dplyr,
-    tidyr
+    tidyr,
+    magrittr
 biocViews:
     SingleCell,
     Transcriptomics
 RoxygenNote: 6.1.1
+Suggests: 
+    knitr,
+    rmarkdown,
+    BiocStyle
+VignetteBuilder: knitr

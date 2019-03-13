@@ -32,10 +32,11 @@
 #'
 #' @return If \code{interactive = FALSE} and the plot is less than 3D, a \code{ggplot2}
 #' object. Otherwise a Plotly object.
-#' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_color_viridis_c
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_color_viridis_c coord_equal
 #' @importFrom plotly plot_ly toWebGL add_markers subplot layout
 #' @importFrom dplyr filter
 #' @importFrom tidyr gather
+#' @importFrom magrittr %>%
 #' @export
 plot_spatial_expression <- function(gene_expressions, locations, symmetry,
                                     transposed = FALSE, interactive = FALSE,
