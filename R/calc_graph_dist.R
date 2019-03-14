@@ -50,10 +50,11 @@
 #' @importFrom BiocNeighbors findKNN
 #' @importFrom RBGL johnson.all.pairs.sp
 #' @importFrom BiocParallel SerialParam
+#' @importFrom Matrix t
 #' @export
 calc_graph_dist <- function(X, k, BNINDEX, BNPARAM, BPPARAM = SerialParam(),
                             transposed = FALSE, ...) {
-  if (!transposed) X <- t(X)
+  if (!transposed) X <- Matrix::t(X)
   fknn_args <- c(k = k, BPPARAM = BPPARAM, list(...))
   if (missing(BNINDEX)) {
     fknn_args$X <- X

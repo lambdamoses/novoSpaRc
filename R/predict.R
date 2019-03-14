@@ -16,14 +16,15 @@
 #' the same as in single cell RNA-seq data supplied in \code{x}.
 #' Defaults to \code{TRUE}.
 #' @return A numeric matrix with genes in rows and locations in columns.
+#' @importFrom Matrix rowMeans
 #' @export
 predict_expr_loc <- function(X, cell_loc, transposed = FALSE,
                              scale = TRUE) {
   if (transposed) X <- t(X)
   out <- X %*% cell_loc
   if (scale) {
-    means <- rowMeans(X)
-    means_pred <- rowMeans(out)
+    means <- Matrix::rowMeans(X)
+    means_pred <- Matrix::rowMeans(out)
     out <- diag(means / means_pred) %*% out
   }
   if (!is.null(rownames(X))) rownames(out) <- rownames(X)

@@ -29,7 +29,8 @@ Imports:
     plotly,
     dplyr,
     tidyr,
-    magrittr
+    magrittr,
+    Matrix
 biocViews:
     SingleCell,
     Transcriptomics

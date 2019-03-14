@@ -1,3 +1,15 @@
+#' If something is a matrix
+#'
+#' To allow users to use sparse matrices from the Matrix package and easily test
+#' if an object is a matrix, either base R matrix or Matrix matrix.
+#'
+#' @param X Object to be tested.
+#' @return Logical, whether X is a matrix of some sort.
+#' @importFrom methods is
+isMatrix <- function(X) {
+  is.matrix(X) | is(X, "Matrix")
+}
+
 #' Plot spatial gene expressions
 #'
 #' This function can be used to plot expression of one or more genes in spatial
@@ -41,26 +53,26 @@
 plot_spatial_expression <- function(gene_expressions, locations, symmetry,
                                     transposed = FALSE, interactive = FALSE,
                                     n_col = 2, pt_size = 1, alpha = 1) {
-  if (!is.atomic(gene_expressions) || !is.matrix(gene_expressions)) {
+  if (!is.atomic(gene_expressions) && !isMatrix(gene_expressions)) {
     stop("gene_expressions must be a numeric vector or matrix.")
   }
-  if (!is.numeric(gene_expressions)) {
+  if (is.matrix(gene_expressions) && !is.numeric(gene_expressions)) {
     stop("gene_expression must be numeric")
   }
-  if (!is.matrix(locations) && !is.data.frame(locations)) {
+  if (!isMatrix(locations) && !is.data.frame(locations)) {
     stop("locations must be a matrix or a data frame.")
   }
-  if (is.matrix(locations)) {
+  if (isMatrix(locations)) {
     if (!is.numeric(locations)) {
       stop("location matrix must be numeric.")
     }
     locations <- as.data.frame(locations)
   }
   if (!transposed) gene_expressions <- t(gene_expressions)
-  if (is.matrix(gene_expressions) && is.null(colnames(gene_expressions))) {
+  if (isMatrix(gene_expressions) && is.null(colnames(gene_expressions))) {
     stop("Genes must be named in gene_expressions.")
   }
-  n <- if (is.matrix(gene_expressions)) nrow(gene_expressions) else length(gene_expressions)
+  n <- if (isMatrix(gene_expressions)) nrow(gene_expressions) else length(gene_expressions)
   if (n != nrow(locations)) {
     stop("Number of locations must be the same in gene_expressions and locations.")
   }
@@ -82,7 +94,7 @@ plot_spatial_expression <- function(gene_expressions, locations, symmetry,
   }
 
   # Make the data frame for plotting
-  if (is.matrix(gene_expressions)) {
+  if (isMatrix(gene_expressions)) {
     ngenes <- ncol(gene_expressions)
     gene_expressions <- as.data.frame(gene_expressions)
     df <- cbind(locations, gene_expressions)
